@@ -1,0 +1,57 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GOOGLE_CLOUD_PROJECT: gb-poc-373711
+  WORKLOAD_IDENTITY_PROVIDER: 'projects/975119474255/locations/global/workloadIdentityPools/gb-github-actions-ci-cd-pool/providers/gb-github-actions-ci-cd-provider'
+  SA_CI_CD_EMAIL: 'sa-bigtesty@gb-poc-373711.iam.gserviceaccount.com'
+
+jobs:
+  tests:
+    name: JUnit tests (BigTesty ${{ matrix.runner }})
+    runs-on: ubuntu-latest
+    # The PRs of forks and of Dependabot have no access to the GCP credentials.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    permissions:
+      contents: read
+      id-token: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # cli: the bigtesty command, docker: the groupbees/bigtesty image with Testcontainers.
+        runner: [cli, docker]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Google auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SA_CI_CD_EMAIL }}
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - uses: astral-sh/setup-uv@v7
+        if: matrix.runner == 'cli'
+
+      - name: Install the BigTesty CLI of requirements.txt
+        if: matrix.runner == 'cli'
+        run: |
+          uv venv
+          uv pip install -r requirements.txt
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Run the tests
+        run: mvn -B test -Dbigtesty.runner=${{ matrix.runner }}

@@ -1,0 +1,24 @@
+version: 2
+
+updates:
+  # Keeps the BigTesty version of requirements.txt (the CLI and the Docker image tag) on the latest release.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: daily
+
+  - package-ecosystem: maven
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      maven:
+        patterns: ['*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ['*']

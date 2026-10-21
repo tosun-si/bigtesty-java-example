@@ -1,0 +1,3 @@
+# The BigTesty version of the tests: the CLI installed in the CI and the tag of the Docker image.
+# Dependabot opens a PR at each BigTesty release, and the CI runs the tests on it.
+bigtesty==1.3.0

@@ -1,0 +1,6 @@
+target/
+.venv/
+.idea
+*.iml
+.DS_Store
+.envrc
